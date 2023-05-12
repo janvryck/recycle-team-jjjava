@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,10 +37,25 @@ public class MainController {
     }
 
     private static double calculatePrice(List<EventMessage> history) {
-        if (history.stream().anyMatch(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))) {
-            return 10.65;
-        }
-        return 0;
+        return history.stream()
+            .filter(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))
+            .map(evt -> (FractionWasDropped) evt.getPayload())
+            .mapToDouble(event -> event.weight() * priceFor(event.fractionType()))
+            .map(MainController::roundMonetaryValue)
+            .sum()
+            ;
+    }
+
+    private static double roundMonetaryValue(double d) {
+        return BigDecimal.valueOf(d).setScale(2, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    private static double priceFor(String fractionType) {
+        return switch (fractionType) {
+            case "Construction waste" -> 0.15;
+            case "Green waste" -> 0.09;
+            default -> throw new IllegalArgumentException("Unknown fraction " + fractionType);
+        };
     }
 
     public record RecycleRequest(List<EventMessage> history, CommandMessage command) {
