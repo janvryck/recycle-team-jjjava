@@ -1,13 +1,12 @@
 package com.dddeurope.recycle.spring;
 
 import com.dddeurope.recycle.commands.CommandMessage;
-import com.dddeurope.recycle.domain.FractionDropOff;
+import com.dddeurope.recycle.domain.DroppedFraction;
 import com.dddeurope.recycle.domain.Person;
 import com.dddeurope.recycle.domain.Visit;
 import com.dddeurope.recycle.events.EventMessage;
 import com.dddeurope.recycle.events.FractionWasDropped;
 import com.dddeurope.recycle.events.IdCardRegistered;
-import com.dddeurope.recycle.events.PriceWasCalculated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,12 +49,12 @@ public class MainController {
             .orElseThrow();
     }
 
-    private List<FractionDropOff> extractDropOffs(List<EventMessage> history) {
+    private List<DroppedFraction> extractDropOffs(List<EventMessage> history) {
         return history.stream()
             .filter(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))
             .map(EventMessage::getPayload)
             .map(FractionWasDropped.class::cast)
-            .map(evt -> new FractionDropOff(evt.cardId(), evt.fractionType(), evt.weight()))
+            .map(evt -> new DroppedFraction(evt.cardId(), evt.fractionType(), evt.weight()))
             .toList();
     }
 
