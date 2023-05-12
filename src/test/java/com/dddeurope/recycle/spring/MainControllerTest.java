@@ -67,8 +67,8 @@ class MainControllerTest {
         MainController.RecycleRequest request = toRequest(
             new IdCardRegistered("123", "Eric Cartman", "Point Dume", "South Park"),
             new IdCardScannedAtEntranceGate("123", "2023-02-10"),
-            new FractionWasDropped("123", "Construction waste", 51), //51 *0.18
-            new FractionWasDropped("123", "Green waste", 23), //*0.12
+            new FractionWasDropped("123", "Construction waste", 51),
+            new FractionWasDropped("123", "Green waste", 23),
             new IdCardScannedAtExitGate("123")
         );
 

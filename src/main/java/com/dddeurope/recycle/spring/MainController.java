@@ -1,7 +1,9 @@
 package com.dddeurope.recycle.spring;
 
 import com.dddeurope.recycle.commands.CommandMessage;
+import com.dddeurope.recycle.domain.FractionDropOff;
 import com.dddeurope.recycle.domain.Person;
+import com.dddeurope.recycle.domain.Visit;
 import com.dddeurope.recycle.events.EventMessage;
 import com.dddeurope.recycle.events.FractionWasDropped;
 import com.dddeurope.recycle.events.IdCardRegistered;
@@ -33,7 +35,9 @@ public class MainController {
     public ResponseEntity<EventMessage> handle(@RequestBody RecycleRequest request) {
         LOGGER.info("Incoming Request: {}", request.asString());
 
-        var message = new EventMessage("todo", new PriceWasCalculated("123", calculatePrice(request.history), "EUR"));
+        var visit = new Visit(extractPersonFrom(request.history), extractDropOffs(request.history));
+
+        var message = new EventMessage("todo", new PriceWasCalculated("123", visit.calculatePrice(), "EUR"));
 
         return ResponseEntity.ok(message);
     }
@@ -48,26 +52,14 @@ public class MainController {
             .orElseThrow();
     }
 
-    private double calculatePrice(List<EventMessage> history) {
+    private List<FractionDropOff> extractDropOffs(List<EventMessage> history) {
         return history.stream()
             .filter(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))
             .map(evt -> (FractionWasDropped) evt.getPayload())
-            .mapToDouble(event -> event.weight() * priceFor(event.fractionType()))
-            .map(this::roundMonetaryValue)
-            .sum()
-            ;
-    }
-
-    private double roundMonetaryValue(double d) {
-        return BigDecimal.valueOf(d).setScale(2, RoundingMode.HALF_UP).doubleValue();
-    }
-
-    private double priceFor(String fractionType) {
-        return switch (fractionType) {
-            case "Construction waste" -> 0.15;
-            case "Green waste" -> 0.09;
-            default -> throw new IllegalArgumentException("Unknown fraction " + fractionType);
-        };
+            .map(evt -> new FractionDropOff(
+                evt.cardId(), evt.fractionType(), evt.weight()
+            ))
+            .toList();
     }
 
     public record RecycleRequest(List<EventMessage> history, CommandMessage command) {
