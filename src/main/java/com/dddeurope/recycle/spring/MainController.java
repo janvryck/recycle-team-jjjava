@@ -1,8 +1,10 @@
 package com.dddeurope.recycle.spring;
 
 import com.dddeurope.recycle.commands.CommandMessage;
+import com.dddeurope.recycle.domain.Person;
 import com.dddeurope.recycle.events.EventMessage;
 import com.dddeurope.recycle.events.FractionWasDropped;
+import com.dddeurope.recycle.events.IdCardRegistered;
 import com.dddeurope.recycle.events.PriceWasCalculated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,21 +38,31 @@ public class MainController {
         return ResponseEntity.ok(message);
     }
 
-    private static double calculatePrice(List<EventMessage> history) {
+    private Person extractPersonFrom(List<EventMessage> history) {
+        return history.stream()
+            .filter(event -> IdCardRegistered.class.getSimpleName().equals(event.getType()))
+            .map(EventMessage::getPayload)
+            .map(IdCardRegistered.class::cast)
+            .map(event -> new Person(event.cardId(), event.city()))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    private double calculatePrice(List<EventMessage> history) {
         return history.stream()
             .filter(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))
             .map(evt -> (FractionWasDropped) evt.getPayload())
             .mapToDouble(event -> event.weight() * priceFor(event.fractionType()))
-            .map(MainController::roundMonetaryValue)
+            .map(this::roundMonetaryValue)
             .sum()
             ;
     }
 
-    private static double roundMonetaryValue(double d) {
+    private double roundMonetaryValue(double d) {
         return BigDecimal.valueOf(d).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
-    private static double priceFor(String fractionType) {
+    private double priceFor(String fractionType) {
         return switch (fractionType) {
             case "Construction waste" -> 0.15;
             case "Green waste" -> 0.09;
