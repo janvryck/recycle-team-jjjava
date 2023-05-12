@@ -7,7 +7,15 @@ public enum Location implements RecycleCenter {
     SOUTH_PARK {
         @Override
         public double calculatePriceFor(String fractionType, int weight) {
-            return weight * priceFor(fractionType);
+            return chargedWeightFor(fractionType, weight) * priceFor(fractionType);
+        }
+
+        private int chargedWeightFor(String fractionType, int weight) {
+            return switch (fractionType) {
+                case "Construction waste" -> Math.max(0, weight - 100);
+                case "Green waste" -> Math.max(0, weight - 50);
+                default -> throw new IllegalArgumentException("Unknown fraction " + fractionType);
+            };
         }
 
         private double priceFor(String fractionType) {

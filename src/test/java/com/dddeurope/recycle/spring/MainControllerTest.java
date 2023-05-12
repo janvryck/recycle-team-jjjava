@@ -74,6 +74,21 @@ class MainControllerTest {
 
         ResponseEntity<EventMessage> response = controller.handle(request);
 
+        assertCalculatedPrice(response, 0.0);
+    }
+
+    @Test
+    public void scenario_4_2() {
+        MainController.RecycleRequest request = toRequest(
+            new IdCardRegistered("123", "Eric Cartman", "Point Dume", "South Park"),
+            new IdCardScannedAtEntranceGate("123", "2023-02-10"),
+            new FractionWasDropped("123", "Construction waste", 151),
+            new FractionWasDropped("123", "Green waste", 73),
+            new IdCardScannedAtExitGate("123")
+        );
+
+        ResponseEntity<EventMessage> response = controller.handle(request);
+
         assertCalculatedPrice(response, 11.94);
     }
 
