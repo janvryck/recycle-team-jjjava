@@ -95,6 +95,24 @@ class MainControllerTest {
         assertPriceWasCalculated(response, PriceWasCalculated::amount, 11.94);
     }
 
+    @Test
+    public void scenario_5() {
+        MainController.RecycleRequest request = toRequest(
+            new IdCardRegistered("567", "Eric Cartman", "Point Dume", "South Park"),
+            new IdCardScannedAtEntranceGate("567", "2023-02-10"),
+            new FractionWasDropped("567", "Construction waste", 85),
+            new IdCardScannedAtExitGate("567"),
+            new IdCardScannedAtEntranceGate("567", "2023-02-10"),
+            new FractionWasDropped("567", "Construction waste", 63),
+            new IdCardScannedAtExitGate("567")
+        );
+
+        ResponseEntity<EventMessage> response = controller.handle(request);
+
+        assertPriceWasCalculated(response, PriceWasCalculated::cardId, "567");
+        assertPriceWasCalculated(response, PriceWasCalculated::amount, 8.64);
+    }
+
     private MainController.RecycleRequest toRequest(Event... events) {
         return new MainController.RecycleRequest(
             Arrays.stream(events)
