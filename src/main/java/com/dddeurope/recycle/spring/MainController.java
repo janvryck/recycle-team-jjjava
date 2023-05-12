@@ -2,6 +2,7 @@ package com.dddeurope.recycle.spring;
 
 import com.dddeurope.recycle.commands.CommandMessage;
 import com.dddeurope.recycle.events.EventMessage;
+import com.dddeurope.recycle.events.FractionWasDropped;
 import com.dddeurope.recycle.events.PriceWasCalculated;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,21 +29,26 @@ public class MainController {
     public ResponseEntity<EventMessage> handle(@RequestBody RecycleRequest request) {
         LOGGER.info("Incoming Request: {}", request.asString());
 
-        var message = new EventMessage("todo", new PriceWasCalculated("123", 0, "EUR"));
+        var message = new EventMessage("todo", new PriceWasCalculated("123", calculatePrice(request.history), "EUR"));
 
         return ResponseEntity.ok(message);
+    }
+
+    private static double calculatePrice(List<EventMessage> history) {
+        if (history.stream().anyMatch(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))) {
+            return 10.65;
+        }
+        return 0;
     }
 
     public record RecycleRequest(List<EventMessage> history, CommandMessage command) {
 
         public String asString() {
             var historyAsString = history.stream()
-                    .map(EventMessage::toString)
-                    .collect(Collectors.joining("\n\t"));
+                .map(EventMessage::toString)
+                .collect(Collectors.joining("\n\t"));
 
             return String.format("%n%s %nWith History\n\t%s", command, historyAsString);
         }
-
     }
-
 }
