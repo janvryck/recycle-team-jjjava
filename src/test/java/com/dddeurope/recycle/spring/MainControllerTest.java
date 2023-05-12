@@ -103,7 +103,7 @@ class MainControllerTest {
         );
     }
 
-    private static <T> void assertPriceWasCalculated(ResponseEntity<EventMessage> handle, Function<PriceWasCalculated, T> producer, T expected) {
+    private <T> void assertPriceWasCalculated(ResponseEntity<EventMessage> handle, Function<PriceWasCalculated, T> producer, T expected) {
         assertThat(handle.getBody())
             .isInstanceOfSatisfying(EventMessage.class, event -> assertThat(event.getPayload())
                 .isInstanceOfSatisfying(PriceWasCalculated.class, priceWasCalculated ->

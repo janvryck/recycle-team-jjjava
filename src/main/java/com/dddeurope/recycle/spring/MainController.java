@@ -37,7 +37,7 @@ public class MainController {
 
         var visit = new Visit(extractPersonFrom(request.history), extractDropOffs(request.history));
 
-        var message = new EventMessage("todo", new PriceWasCalculated("123", visit.calculatePrice(), "EUR"));
+        var message = new EventMessage("todo", visit.calculatePrice());
 
         return ResponseEntity.ok(message);
     }
@@ -55,10 +55,9 @@ public class MainController {
     private List<FractionDropOff> extractDropOffs(List<EventMessage> history) {
         return history.stream()
             .filter(event -> FractionWasDropped.class.getSimpleName().equals(event.getType()))
-            .map(evt -> (FractionWasDropped) evt.getPayload())
-            .map(evt -> new FractionDropOff(
-                evt.cardId(), evt.fractionType(), evt.weight()
-            ))
+            .map(EventMessage::getPayload)
+            .map(FractionWasDropped.class::cast)
+            .map(evt -> new FractionDropOff(evt.cardId(), evt.fractionType(), evt.weight()))
             .toList();
     }
 
